@@ -15,7 +15,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="KiapiDev_Socket.cpp">
+    <ClCompile Include="KiapiDev_SocketServer.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="KiapiDev_SocketClient.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
