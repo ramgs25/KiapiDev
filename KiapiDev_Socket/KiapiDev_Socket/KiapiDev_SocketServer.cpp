@@ -52,7 +52,7 @@ int main()
 	recv(cs, Buffer, 1024, 0);
 	printf("클라이언트가 보낸 데이터: %s\n", Buffer);
 
-	printf("서버에 보낼 데이터 입력: ");
+	printf("클라이언트에 보낼 데이터 입력: ");
 	scanf("%s", Buffer);
 	send(cs, Buffer, strlen(Buffer), 0);
 
@@ -68,4 +68,4 @@ int main()
 
 	printf("서버를 종료합니다\n");
 	return 0;
-}	
+}
