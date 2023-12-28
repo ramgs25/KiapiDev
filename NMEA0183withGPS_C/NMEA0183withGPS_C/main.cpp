@@ -1,7 +1,9 @@
 ﻿#include <stdio.h>
 #include <windows.h>
 #include <string.h>
-#include "printsam.h" // NMEA0183 메시지 중 GPRMC 형태를 찾아서 이후 정보를 출력하는 함수 정의
+//#include "printsam.h" // NMEA0183 메시지 중 GPRMC 형태를 찾아서 이후 정보를 출력하는 함수 정의
+//#include "printess.h"
+#include "findID.h"
 
 int main() {
     HANDLE hSerial;
@@ -10,7 +12,7 @@ int main() {
     char buffer[256];
 
     // COM 포트 열기
-    hSerial = CreateFileW(L"COM9", GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+    hSerial = CreateFileW(L"COM5", GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
     if (hSerial == INVALID_HANDLE_VALUE) {
         fprintf(stderr, "Error opening serial port\n");
         return 1;
@@ -53,9 +55,14 @@ int main() {
         DWORD bytesRead;
         if (ReadFile(hSerial, buffer, sizeof(buffer), &bytesRead, NULL)) {
             if (bytesRead > 0) {
-                printf("Read %lu bytes from serial port: \n%.*s\n", bytesRead, bytesRead, buffer);
-
-                printSubstringAfterMatch(buffer, "$GPRMC"); // "printsam.h에서 정의된 함수를 사용"
+                //printf("\nRead %lu bytes from serial port: \n%.*s\n", bytesRead, bytesRead, buffer);
+                if (strstr(buffer, "$GNRMC") != NULL) {
+                    //printSubstringAfterMatch(buffer, "$GNRMC");
+                    findGNRMC(buffer, "$GNRMC", '$');
+                }
+                //printSubstringAfterMatch(buffer, "$GNRMC"); // "printsam.h에서 정의된 함수를 사용"
+                else
+                    continue;
             }
         }
         else {
@@ -63,7 +70,7 @@ int main() {
             break;
         }
         // 데이터를 추가로 읽기 위해 한 번 읽은 데이터는 비우기
-        memset(buffer, 0, sizeof(buffer));
+        //memset(buffer, 0, sizeof(buffer));
     }
 
     // COM 포트 닫기
