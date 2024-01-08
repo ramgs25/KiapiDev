@@ -22,6 +22,7 @@ int main() {
 		printf("---위도---\n");
 		printf("GNRMC 위도값 예시: %f\n", testLati);
 		printf("GNRMC 위도값 중 '도': %d\n", calcLatiPart1);
+		printf("calcLatiPart2: %d\n", calcLatiPart2);
 		printf("GNRMC 위도값 중 '분': %f\n\n", calcLatiPart4);
 
 		printf("Latitude(DMS): %d도 %f분 %f초\n", calcLatiDMS_d, calcLatiDMS_m, calcLatiDMS_s);
