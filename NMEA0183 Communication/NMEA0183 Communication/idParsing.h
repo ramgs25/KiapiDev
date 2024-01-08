@@ -51,9 +51,6 @@ void idParsing(const char* input) {
     char* ptr = strtok(inputInsertBlank, ",");
     int k = 0;
 
-    char cpyptrforLati[256] = "\0", cpyptrforLong[256] = "\0";
-    char* PcpyptrforLati = &cpyptrforLati[0], PcpyptrforLong = &cpyptrforLong[0];
-
     //문자열 요소들을 하나씩 분리하여 출력
     while (ptr != NULL) {
         switch (k) {
