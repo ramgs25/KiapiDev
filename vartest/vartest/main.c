@@ -27,6 +27,7 @@ int main() {
 
 		printf("Latitude(DMS): %d도 %f분 %f초\n", calcLatiDMS_d, calcLatiDMS_m, calcLatiDMS_s);
 		printf("Latitude(degree): %f\n\n", calcLatiDegree);
+		printf("Latitude(degree - int): %d\n\n", calcLatiDegree);
 	}
 	else if (-900000000 > testLati || testLati >= 900000001) {
 		printf("비정상적인 데이터입니다.\n");
@@ -76,16 +77,16 @@ int main() {
 	}
 
 	//NMEA0183 Sentence ID: GNRMC 중 속도값 변환
-	float testSpeed = 0.077000;
+	unsigned short testSpeed = 0.077000;
 
 	//SAE J2735 표준 0 <= speed < 8,191
 	if (0 <= testSpeed && testSpeed < 8191) {
-		float calcSpeed = testSpeed * 0.02; //Knots 단위의 값을 km/h로 변환
+		unsigned short calcSpeed = (testSpeed * 0.02) * 3.6; //(units of 0.02 m/s) → km/h
 
 		printf("---속도---\n");
-		printf("GNRMC 속도값 예시: %fKnots\n\n", testSpeed);
+		printf("GNRMC 속도값 예시: %d Knots\n\n", testSpeed);
 
-		printf("Speed: %fkm/h", calcSpeed);
+		printf("Speed: %d km/h", calcSpeed);
 	}
 	else if (0 > testSpeed || testSpeed >= 8191) {
 		printf("비정상적인 데이터입니다.\n");
