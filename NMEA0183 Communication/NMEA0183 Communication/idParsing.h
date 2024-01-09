@@ -23,19 +23,25 @@ void idParsing(const char* input) {
     char inputInsertBlank[256] = "\0"; //'@'문자 삽입을 위한 배열
     int blankIndex = 0;
 
-    //문자열에서 위도값 계산 및 변환을 위한 변수
-    //int temp1Lati = 0, temp2Lati = 0;
-    //float temp3Lati = 0, temp4Lati = 0;
+    //위도값 계산 및 변환을 위한 변수
+    float temp1Lati = 0; //도분초 형태로 '도'값 저장
+    float temp2Lati = 0; 
+    float temp3Lati = 0; //도분초 형태로 '분'값 저장
+    float calcLati = 0; //도분초(DMS)에서 도(degree)값으로 계산하여 저장
 
-    //문자열에서 경도값 계산 및 변환을 위한 변수
-    //int temp1Long = 0, temp2Long = 0;
-    //float temp3Long = 0, temp4Long = 0;
+    //경도값 계산 및 변환을 위한 변수
+    float temp1Long = 0; //도분초 형태로 '도'값 저장
+    float temp2Long = 0;
+    float temp3Long = 0; //도분초 형태로 '분'값 저장
+    float calcLong = 0;
 
     //속도값 계산 및 변환을 위한 변수
-    unsigned short kmhSpeed = 0;
+    float calcSpeedms = 0;
+    float calcSpeedDegree = 0;
+    float insertKnots = 0;
 
     //방향값 계산 및 변환을 위한 변수
-    //float calcHeading = 0;
+    float insertDegree = 0;
 
     //데이터가 빈 경우 구분을 위해 '@'문자 삽입
     for (int i = 0; i < strlen(input); i++) {
@@ -69,24 +75,32 @@ void idParsing(const char* input) {
         //case 2. 상태 A = Active, V = Void. V이면 신뢰할 수 없는 상태
         case 2:
             strncpy(inputdata.gnrmcdataStatus, (ptr[0] == '@') ? "none" : ptr, sizeof(inputdata.gnrmcdataStatus));
-            //printf("Status: %s\n", ptr);
+            //수신한 신호가 신뢰할 수 없는 경우 메시지 출력
+            if (inputdata.gnrmcdataStatus == 'V') {
+                printf("Status: %s(Unreliable signal)\n", inputdata.gnrmcdataStatus);
+            }
+            else if (inputdata.gnrmcdataStatus == 'A') {
+                //printf("Status: %s(Reliable signal)\n", inputdata.gnrmcdataSatus);
+            }
             break;
 
         //case 3. 위도
         case 3:
-            inputdata.gnrmcdataLatitude = (ptr[0] == '@') ? 0 : ((int)(atof(ptr) * 100000));
-
-            //SAE J2735 표준 -900,000,000 <= latitude < 900,000,001
+            //위도값은 데이터가 없으면 0, 데이터가 있으면 그 데이터의 소수점 이하 숫자가 없도록 정수화(100,000을 곱셈)한 수
+            inputdata.gnrmcdataLatitude = (ptr[0] == '@') ? 0 : (atof(ptr) * 100000);
+            
+            //SAE J2735 표준 -900,000,000 <= latitude < 900,000,001 에 속하는지 확인
             if (-900000000 <= inputdata.gnrmcdataLatitude && inputdata.gnrmcdataLatitude < 900000001) {
-                /*temp3Lati = inputdata.gnrmcdataLatitude - (int)inputdata.gnrmcdataLatitude;
-                temp1Lati = (int)(inputdata.gnrmcdataLatitude / 100);
-                temp2Lati = ((int)inputdata.gnrmcdataLatitude % 100);
-                temp4Lati = (float)temp2Lati + temp3Lati;
-                printf("Latitude: %f\n", temp1Lati + ((temp4Lati) / 60));*/
+                temp1Lati = inputdata.gnrmcdataLatitude / 10000000; //도분초 형태로 '도'값 저장 - 앞에서부터 두 자리 수
+                temp2Lati = inputdata.gnrmcdataLatitude % ((int)temp1Lati * 10000000);
+                temp3Lati = temp2Lati / 100000; //도분초 형태로 '분'값 저장
+                calcLati = temp1Lati + (temp3Lati / 60); //도분초(DMS)에서 도(degree)값으로 계산하여 저장
+                
                 printf("Latitude: %d\n", inputdata.gnrmcdataLatitude);
             }
+            //범위에 속하지 않는다면
             else if (-900000000 > inputdata.gnrmcdataLatitude || inputdata.gnrmcdataLatitude >= 900000001) {
-                printf("비정상적인 데이터입니다.\n");
+                printf("Latitude is not standard data.\n");
             }
             break;
 
@@ -98,19 +112,21 @@ void idParsing(const char* input) {
 
         //case 5. 경도
         case 5:
-            inputdata.gnrmcdataLongitude = (ptr[0] == '@') ? 0 : ((int)(atof(ptr) * 100000));
+            //경도값은 데이터가 없으면 0, 데이터가 있으면 그 데이터의 소수점 이하 숫자가 없도록 정수화(100,000을 곱셈)한 수
+            inputdata.gnrmcdataLongitude = (ptr[0] == '@') ? 0 : (atof(ptr) * 100000);
 
-            //SAE J2735 표준 -1,799,999,999 <= longitude < 1,800,000,001
+            //SAE J2735 표준 -1,799,999,999 <= longitude < 1,800,000,001 에 속하는지 확인
             if (-1799999999 <= inputdata.gnrmcdataLongitude && inputdata.gnrmcdataLongitude < 1800000001) {
-                /*temp3Long = inputdata.gnrmcdataLongitude - (int)inputdata.gnrmcdataLongitude;
-                temp1Long = (int)(inputdata.gnrmcdataLongitude / 100);
-                temp2Long = ((int)inputdata.gnrmcdataLongitude % 100);
-                temp4Long = (float)temp2Long + temp3Long;
-                printf("Longitude: %f\n", temp1Long + ((temp4Long) / 60));*/
+                temp1Long = inputdata.gnrmcdataLongitude / 10000000; //도분초 형태로 '도'값 저장 - 앞에서부터 세 자리 수
+                temp2Long = inputdata.gnrmcdataLongitude % ((int)temp1Long * 10000000);
+                temp3Long = temp2Long / 100000; //도분초 형태로 '분'값 저장
+                calcLong = temp1Long + (temp3Long / 60); //도분초(DMS)에서 도(degree)값으로 계산하여 저장
+
                 printf("Longitude: %d\n", inputdata.gnrmcdataLongitude);
             }
+            //범위에 속하지 않는다면
             else if (-1799999999 > inputdata.gnrmcdataLongitude || inputdata.gnrmcdataLongitude >= 1800000001) {
-                printf("비정상적인 데이터입니다.\n");
+                printf("Longitude is not standard data.\n");
             }
             break;
 
@@ -122,28 +138,53 @@ void idParsing(const char* input) {
 
         //case 7. 속도. units of 0.02m/s
         case 7:
-            inputdata.gnrmcdataSpeed = (ptr[0] == '@') ? 0 : ((unsigned short)(atof(ptr) * 0.02));
+            //ublox의 GNRMC의 속도 데이터 값은 Knots단위임.
+            //1Knots = 0.514m/s. 데이터에 0.514를 곱하여 m/s단위의 값을 만듦
+            //SAE J2735에 따라 Speed의 1value = 0.02m/s. 바꿔 말하면 1m/s = 50(Value) 데이터에 50을 곱하여 value단위의 값을 만듦
+            inputdata.gnrmcdataSpeed = (ptr[0] == '@') ? 0 : (atof(ptr)) * 0.514 * 50;
 
-            //SAE J2735 표준 0 <= speed < 8,191
+            //1000value는 72km/h가 맞는지 확인하기 위한 코드
+            //insertKnots = 38.92;
+            //inputdata.gnrmcdataSpeed = insertKnots * 0.514 * 50;
+
+            //SAE J2735 표준 0 <= speed < 8,191 에 속하는지 확인
             if (0 <= inputdata.gnrmcdataSpeed && inputdata.gnrmcdataSpeed < 8191) {
-                kmhSpeed = ((unsigned short)(atof(ptr) * 0.02 * 3.6)); //m/s를 km/h로 변환
-                printf("Speed: %u(%u km/h)\n", inputdata.gnrmcdataSpeed, kmhSpeed);
+
+                //1000value는 72km/h가 맞는지 확인하기 위한 코드
+                printf("Speed: %u(value)\n", inputdata.gnrmcdataSpeed);
+                //printf("Speed: %d(knots)\n", (int)((inputdata.gnrmcdataSpeed / 0.514) / 50));
+                //printf("Speed: %d(m/s)\n", (int)((inputdata.gnrmcdataSpeed / 50)));
+                printf("Speed: %d(km/h)\n", (int)((inputdata.gnrmcdataSpeed / 50) * 3.6));
             }
+            //범위에 속하지 않는다면
             else if (0 > inputdata.gnrmcdataSpeed || inputdata.gnrmcdataSpeed >= 8191) {
-                printf("비정상적인 데이터입니다.\n");
+                printf("Speed is not standard data.\n");
             }
             break;
 
         //case 8. 진행방향. 진북(WGS-84 타원체를 중심으로)을 중심으로 시계방향으로 0보다 같거나 크고, 360보다 작은 범위의 각도값
         case 8:
-            inputdata.gnrmcdataCourse = (ptr[0] == '@') ? 0 : ((unsigned short)(atof(ptr) * 0.0125));
+            //방향값이 없으면 0 방향값이 있으면 SAE J2735에 따라 80을 곱한 값을 대입
+            //GNRMC format에서 course값은 degree단위
+            //1value (SAE J2735) = 0.0125degree
+            //1degree = 80value
+            inputdata.gnrmcdataCourse = (ptr[0] == '@') ? 0 : ((unsigned short)atof(ptr) * 80);
+            
+            //정지한 상태에서 데이터가 변하지 않는 관계로 임의의 값을 지정해주어 확인하기 위한 코드
+            insertDegree = 250;
+            inputdata.gnrmcdataCourse = insertDegree * 80;
 
-            //SAE J2735 표준 0 <= heading < 28800
+            //SAE J2735 표준 0 <= heading <= 28800 에 속하는지 확인
             if (0 <= inputdata.gnrmcdataCourse && inputdata.gnrmcdataCourse < 28800) {
-                printf("heading: %d\n\n", inputdata.gnrmcdataCourse);
+
+                //정지한 상태에서 데이터가 변하지 않는 관계로 임의의 값을 지정해주어 확인하기 위한 코드
+                printf("Course: %u(value)\n", inputdata.gnrmcdataCourse);
+
+                printf("Course: %d(degree)\n\n", inputdata.gnrmcdataCourse / 80);
             }
+            //범위에 속하지 않는다면
             else if (0 > inputdata.gnrmcdataCourse || inputdata.gnrmcdataCourse >= 28800) {
-                printf("비정상적인 데이터입니다.\n");
+                printf("Course is not standard data.\n");
             }
             break;
 
